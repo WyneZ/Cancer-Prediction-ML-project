@@ -109,7 +109,6 @@ for feature in feature_order:
         st.write(f"Range: {data[feature].min():.1f}-{data[feature].max():.1f}")
 
 
-
 # Main content tabs
 tab1, tab2, tab3 = st.tabs(["Prediction", "Data Analysis", "Model Info"])
 
@@ -334,27 +333,7 @@ with tab3:
     - Steep drops indicate thresholds where false positives increase rapidly  
     - Helps select operating points based on clinical priorities  
     """)
-    
-    # Feature Importance Plot
-    st.subheader("Top 10 Important Features")
-    importances = model.feature_importances_
-    top_10_indices = np.argsort(importances)[-10:]
-    fig6, ax6 = plt.subplots(figsize=(10, 6))
-    readable_names = [name.replace('_', ' ').title() for name in feature_order]
-    ax6.barh(range(len(top_10_indices)), importances[top_10_indices], color='#4e73df', align='center')
-    ax6.set_yticks(range(len(top_10_indices)))
-    ax6.set_yticklabels([readable_names[i] for i in top_10_indices])
-    ax6.set_xlabel('Relative Importance')
-    st.pyplot(fig6)
-    
-    # Feature importance explanation
-    st.caption("""
-    **Clinical Relevance**:  
-    - Shows which features most influence predictions  
-    - Helps validate if medically important factors are being weighted appropriately  
-    - Does NOT imply causation - always consider clinical context  
-    """)
-    
+
     # Confusion Matrix
     st.subheader(f"Confusion Matrix ({set_name})")
     cm = confusion_matrix(y_set, y_set_pred)
@@ -377,6 +356,26 @@ with tab3:
         - False alarm rate: {cm[0,1]/(cm[0,0]+cm[0,1])*100:.1f}% of benign cases  
         - Missed cancer rate: {cm[1,0]/(cm[1,0]+cm[1,1])*100:.1f}% of malignant cases  
         """)
+    
+    # Feature Importance Plot
+    st.subheader("Top 10 Important Features")
+    importances = model.feature_importances_
+    top_10_indices = np.argsort(importances)[-10:]
+    fig6, ax6 = plt.subplots(figsize=(10, 6))
+    readable_names = [name.replace('_', ' ').title() for name in feature_order]
+    ax6.barh(range(len(top_10_indices)), importances[top_10_indices], color='#4e73df', align='center')
+    ax6.set_yticks(range(len(top_10_indices)))
+    ax6.set_yticklabels([readable_names[i] for i in top_10_indices])
+    ax6.set_xlabel('Relative Importance')
+    st.pyplot(fig6)
+    
+    # Feature importance explanation
+    st.caption("""
+    **Clinical Relevance**:  
+    - Shows which features most influence predictions  
+    - Helps validate if medically important factors are being weighted appropriately  
+    - Does NOT imply causation - always consider clinical context  
+    """)
 
 # Show raw data option
 if st.checkbox("Show raw data"):
