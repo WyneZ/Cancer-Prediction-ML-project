@@ -195,6 +195,42 @@ with tab2:
     - A balanced dataset (close to 50-50) helps the model learn both classes equally.  
     - Current distribution: **{diagnosis_counts['Benign']} benign** ({diagnosis_counts['Benign']/sum(diagnosis_counts)*100:.1f}%) vs **{diagnosis_counts['Malignant']} malignant** ({diagnosis_counts['Malignant']/sum(diagnosis_counts)*100:.1f}%).
     """)
+
+    # Feature Distribution Boxplot
+    st.subheader("Feature Distribution by Diagnosis")
+    feature_options = [(feature, feature.replace('_', ' ').title()) for feature in feature_order]
+    selected_feature = st.selectbox(
+        "Select feature to visualize",
+        options=feature_options,
+        format_func=lambda x: x[1]
+    )
+    fig3, ax3 = plt.subplots(figsize=(10, 6))
+    sns.boxplot(
+        x='diagnosis_label',
+        y=selected_feature[0],
+        data=data,
+        palette={'Benign': '#66b3ff', 'Malignant': '#ff9999'},
+        width=0.5,
+        ax=ax3
+    )
+    ax3.set_title(f'Distribution of {selected_feature[1]} by Diagnosis')
+    ax3.set_xlabel('Diagnosis')
+    ax3.set_ylabel(selected_feature[1])
+    st.pyplot(fig3)
+    
+    # Calculate median values for explanation
+    benign_median = data[data['diagnosis_label']=='Benign'][selected_feature[0]].median()
+    malignant_median = data[data['diagnosis_label']=='Malignant'][selected_feature[0]].median()
+    
+    # Explanation for Feature Distribution
+    st.caption(f"""
+    **Clinical Interpretation of {selected_feature[1].replace('_', ' ')}**:  
+    - Median value for benign cases: **{benign_median:.2f}**  
+    - Median value for malignant cases: **{malignant_median:.2f}**  
+    - Clear separation between boxes suggests this feature is clinically useful for differentiation  
+    - Overlapping ranges indicate cases where this feature alone cannot reliably determine malignancy  
+    """)
+
     
 with tab3:
     # Add selectbox for choosing train or test set
