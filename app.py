@@ -1,294 +1,99 @@
-# import streamlit as st
-# import pandas as pd
-# import numpy as np
-# import shap
-# import matplotlib.pyplot as plt
-# import seaborn as sns
-# from sklearn.ensemble import RandomForestClassifier
-# from sklearn.model_selection import train_test_split
-# from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
-
-# # 1. Load and prepare data
-# @st.cache_data
-# def load_data():
-#     url = "https://archive.ics.uci.edu/ml/machine-learning-databases/breast-cancer-wisconsin/wdbc.data"
-#     columns = ["id", "diagnosis"] + [f"feature_{i}" for i in range(1, 31)]
-#     data = pd.read_csv(url, header=None, names=columns)
-#     data['diagnosis'] = data['diagnosis'].map({'M':1, 'B':0})
-#     return data
-
-# data = load_data()
-# X = data.drop(['id', 'diagnosis'], axis=1)
-# y = data['diagnosis']
-
-# # 2. Train/test split
-# X_train, X_test, y_train, y_test = train_test_split(
-#     X, y, 
-#     test_size=0.2, 
-#     random_state=42,
-#     stratify=y
-# )
-
-# # 3. Train model
-# @st.cache_resource
-# def train_model():
-#     model = RandomForestClassifier(
-#         n_estimators=100,
-#         random_state=42,
-#         class_weight='balanced'
-#     )
-#     model.fit(X_train, y_train)
-#     return model
-
-# model = train_model()
-
-# # 4. Streamlit UI
-# st.title("Breast Cancer Prediction System")
-
-# pred = model.predict(X)[0]
-
-# # Sidebar inputs
-# st.sidebar.header("Patient Features")
-# inputs = {}
-# for feature in X.columns:
-#     inputs[feature] = st.sidebar.slider(
-#         feature,
-#         float(X[feature].min()),
-#         float(X[feature].max()),
-#         float(X[feature].mean())
-#     )
-
-# # Main content
-# tab1, tab2, tab3 = st.tabs(["Prediction", "Data Analysis", "Model Info"])
-
-# with tab1:
-#     if st.sidebar.button("Predict"):
-#         input_df = pd.DataFrame([inputs])
-        
-#         # Prediction
-#         proba = model.predict_proba(input_df)[0][1]
-#         prediction = 1 if proba >= 0.5 else 0
-
-#         prediction_class = "Malignant" if proba >= 0.5 else "Benign"
-#         confidence = proba*100 if prediction_class == "Malignant" else (1-proba)*100
-
-#         # Color-coded display
-#         if prediction_class == "Malignant":
-#             st.error(f"Prediction: {prediction_class}")
-#         else:
-#             st.success(f"Prediction: {prediction_class}")
-
-#         # label = "Benign" if proba < 1 else "Malignant"
-#         # st.success(f"Prediction: {label}")
-#         st.info(f"Confidence: {confidence:.2f}%")
-        
-#         # Pie Chart with explicit figure
-#         fig1, ax1 = plt.subplots()
-#         ax1.pie(
-#             [proba, 1-proba],
-#             labels=['Malignant', 'Benign'],
-#             colors=['#ff9999','#66b3ff'],
-#             autopct='%1.1f%%',
-#             startangle=90
-#         )
-#         ax1.axis('equal')
-#         st.subheader("Prediction Probability")
-#         st.pyplot(fig1)
-
-#         # SHAP Force Plot for SHAP >= v0.20
-#         st.subheader("Feature Impact Analysis")
-
-#         # 1. Initialize explainer
-#         explainer = shap.TreeExplainer(model)
-
-#         # 2. Prepare input data (ensure 2D array)
-#         input_array = input_df.values.reshape(1, -1)
-
-#         # 3. Get SHAP values
-#         shap_values = explainer(input_array)  # Returns Explanation object
-
-#         # 4. Create visualization
-#         plt.figure(figsize=(10, 3))
-#         shap.plots.force(
-#             base_value=explainer.expected_value[0],  # Use [0] for binary classification
-#             shap_values=shap_values.values[0, :, 0],  # For first (only) output
-#             features=input_array[0],
-#             feature_names=X.columns.tolist(),
-#             matplotlib=True,
-#             show=False
-#         )
-
-#         # 5. Display in Streamlit
-#         st.pyplot(plt.gcf())
-
-# with tab2:
-#     # Data Distribution Plots
-#     st.subheader("Data Distribution")
-    
-#     # Create string version of diagnosis for plotting
-#     data['diagnosis_label'] = data['diagnosis'].map({0: 'Benign', 1: 'Malignant'})
-    
-#     # Diagnosis Distribution Pie Chart with explicit figure
-#     fig2, ax2 = plt.subplots()
-#     diagnosis_counts = data['diagnosis_label'].value_counts()
-#     ax2.pie(
-#         diagnosis_counts,
-#         labels=diagnosis_counts.index,
-#         colors=['#66b3ff','#ff9999'],
-#         autopct='%1.1f%%',
-#         startangle=90
-#     )
-#     ax2.axis('equal')
-#     st.pyplot(fig2)
-    
-#     # Feature Distribution Boxplot with explicit figure
-#     st.subheader("Feature Distribution by Diagnosis")
-#     selected_feature = st.selectbox("Select feature to visualize", X.columns)
-#     fig3, ax3 = plt.subplots(figsize=(10, 6))
-#     sns.boxplot(
-#         x='diagnosis_label',
-#         y=selected_feature,
-#         data=data,
-#         palette={'Benign': '#66b3ff', 'Malignant': '#ff9999'},
-#         width=0.5,
-#         ax=ax3
-#     )
-#     ax3.set_title(f'Distribution of {selected_feature} by Diagnosis')
-#     ax3.set_xlabel('Diagnosis')
-#     ax3.set_ylabel(selected_feature)
-#     st.pyplot(fig3)
-
-# with tab3:
-#     # Model Information
-#     st.subheader("Model Performance Metrics")
-    
-#     # Feature Importance Plot with explicit figure
-#     st.subheader("Feature Importance")
-#     importances = model.feature_importances_
-#     indices = np.argsort(importances)[-10:]
-#     fig4, ax4 = plt.subplots(figsize=(10, 6))
-#     ax4.barh(range(len(indices)), importances[indices], color='b', align='center')
-#     ax4.set_yticks(range(len(indices)))
-#     ax4.set_yticklabels(X.columns[indices])
-#     ax4.set_xlabel('Relative Importance')
-#     ax4.set_title('Top 10 Important Features')
-#     st.pyplot(fig4)
-    
-#     # Confusion Matrix with explicit figure
-#     st.subheader("Confusion Matrix")
-#     y_pred = model.predict(X_test)
-#     cm = confusion_matrix(y_test, y_pred)
-#     fig5, ax5 = plt.subplots()
-#     ConfusionMatrixDisplay(cm, display_labels=['Benign', 'Malignant']).plot(ax=ax5)
-#     st.pyplot(fig5)
-
-# # Show raw data option
-# if st.checkbox("Show raw data"):
-#     st.write(data)
-
-
-
-
-
-
-
 import streamlit as st
 import pandas as pd
 import numpy as np
 import shap
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.ensemble import RandomForestClassifier
+import joblib
+from pathlib import Path
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import (confusion_matrix, ConfusionMatrixDisplay, 
+                            precision_score, recall_score, f1_score, 
+                            roc_auc_score, precision_recall_curve, roc_curve)
+from shap import Explanation
 
-# Actual feature names from the Wisconsin Breast Cancer dataset
-feature_names = [
-    'radius_mean', 'texture_mean', 'perimeter_mean', 'area_mean', 'smoothness_mean',
-    'compactness_mean', 'concavity_mean', 'concave_points_mean', 'symmetry_mean', 
-    'fractal_dimension_mean', 'radius_se', 'texture_se', 'perimeter_se', 'area_se',
-    'smoothness_se', 'compactness_se', 'concavity_se', 'concave_points_se', 
-    'symmetry_se', 'fractal_dimension_se', 'radius_worst', 'texture_worst',
-    'perimeter_worst', 'area_worst', 'smoothness_worst', 'compactness_worst',
-    'concavity_worst', 'concave_points_worst', 'symmetry_worst', 'fractal_dimension_worst'
-]
-
-# 1. Load and prepare data
+# Load pre-saved model and dataset
 @st.cache_data
 def load_data():
-    url = "https://archive.ics.uci.edu/ml/machine-learning-databases/breast-cancer-wisconsin/wdbc.data"
-    columns = ["id", "diagnosis"] + feature_names
-    data = pd.read_csv(url, header=None, names=columns)
-    data['diagnosis'] = data['diagnosis'].map({'M':1, 'B':0})
-    return data
+    # Assuming files are in the same directory as the script
+    data_path = Path(__file__).parent / "breast_cancer.csv"
+    model_path = Path(__file__).parent / "cancer_model.pkl"
+    
+    data = pd.read_csv(data_path)
+    model = joblib.load(model_path)
+    
+    # Check for common target column names
+    target_col = None
+    for col in ['diagnosis', 'target', 'class', 'outcome']:
+        if col in data.columns:
+            target_col = col
+            break
+    
+    if target_col is None:
+        st.error("Could not find target column in dataset. Expected one of: 'diagnosis', 'target', 'class', 'outcome'")
+        st.stop()
+    
+    return data, model, target_col
 
-data = load_data()
-X = data.drop(['id', 'diagnosis'], axis=1)
-y = data['diagnosis']
+data, model, target_col = load_data()
 
-# Save original feature order
-feature_order = X.columns.tolist()
+# Get feature names from the model
+feature_names = model.feature_names_in_
+feature_order = list(feature_names)
 
-# 2. Train/test split
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, 
-    test_size=0.2, 
-    random_state=42,
-    stratify=y
+# Split data into train and test sets (80/20 split)
+X = data[feature_names]
+y = data[target_col]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Cache SHAP explainer for faster predictions
+@st.cache_resource
+def get_shap_explainer(_model):  # Note the underscore prefix
+    return shap.TreeExplainer(_model)
+
+explainer = get_shap_explainer(model)  # This will work now
+
+# Predictions on TEST set only (for realistic metrics)
+y_pred = model.predict(X_test)
+y_pred_proba = model.predict_proba(X_test)[:, 1]
+
+icon_path = Path(__file__).parent / "icon.png"
+
+st.set_page_config(
+    page_title="Breast Cancer Prediction",
+    page_icon=icon_path,
+    layout="centered",
+    initial_sidebar_state="auto",
 )
 
-# 3. Train model
-@st.cache_resource
-def train_model():
-    model = RandomForestClassifier(
-        n_estimators=100,
-        random_state=42,
-        class_weight='balanced'
-    )
-    model.fit(X_train, y_train)
-    return model
-
-model = train_model()
-
-# Get top 10 important features
-importances = model.feature_importances_
-top_10_indices = np.argsort(importances)[-10:]
-top_10_features = X.columns[top_10_indices]
-
-# 4. Streamlit UI
+# Streamlit UI
 st.title("Breast Cancer Prediction System")
 
-# Sidebar with top 10 features
+# Sidebar with all features
 st.sidebar.header("Patient Features")
-# st.sidebar.markdown("**Feature Importance Rankings:**")
-# for i, (feature, imp) in enumerate(zip(top_10_features, sorted(importances[top_10_indices])[::-1])):
-#     st.sidebar.markdown(f"{i+1}. {feature.replace('_', ' ').title()} ({imp:.3f})")
-
 inputs = {}
-for feature in top_10_features:
-    # Create human-readable labels
-    readable_name = feature.replace('_', ' ').title()
-    inputs[feature] = st.sidebar.slider(
-        readable_name,
-        float(X[feature].min()),
-        float(X[feature].max()),
-        float(X[feature].mean()),
-        step=0.01
-    )
-
-# Fill remaining features with mean values
 for feature in feature_order:
-    if feature not in inputs:
-        inputs[feature] = float(X[feature].mean())
+    readable_name = feature.replace('_', ' ').title()
+    col1, col2 = st.sidebar.columns([3, 1])
+    with col1:
+        inputs[feature] = st.slider(
+            readable_name,
+            float(data[feature].min()),
+            float(data[feature].max()),
+            float(data[feature].mean()),
+            step=0.01,
+            key=feature
+        )
+    with col2:
+        st.write("")
+        st.write(f"Range: {data[feature].min():.1f}-{data[feature].max():.1f}")
 
-# Main content
+# Main content tabs
 tab1, tab2, tab3 = st.tabs(["Prediction", "Data Analysis", "Model Info"])
 
 with tab1:
-    if st.sidebar.button("Predict", type="primary"):
-        # Create DataFrame with features in original training order
-        input_data = {feature: [inputs[feature]] for feature in feature_order}
-        input_df = pd.DataFrame(input_data, columns=feature_order)
+    if st.button("Predict", type="primary"):
+        input_df = pd.DataFrame([inputs], columns=feature_order)
         
         # Prediction
         proba = model.predict_proba(input_df)[0][1]
@@ -314,27 +119,28 @@ with tab1:
         st.subheader("Prediction Probability")
         st.pyplot(fig1)
 
-        # SHAP Force Plot
+        # SHAP Waterfall Plot (using cached explainer)
         st.subheader("Feature Impact Analysis")
-        explainer = shap.TreeExplainer(model)
-        shap_values = explainer(input_df.values.reshape(1, -1))
+        shap_values = explainer(input_df)
         
-        plt.figure(figsize=(10, 3))
-        shap.plots.force(
-            base_value=explainer.expected_value[0],
-            shap_values=shap_values.values[0, :, 0],
-            features=input_df.iloc[0],
-            feature_names=[name.replace('_', ' ').title() for name in feature_order],
-            matplotlib=True,
-            show=False
+        exp = Explanation(
+            values=shap_values.values[:,:,1],
+            base_values=shap_values.base_values[:,1],
+            data=input_df.values,
+            feature_names=[name.replace('_', ' ').title() for name in feature_order]
         )
+        
+        plt.figure()
+        shap.plots.waterfall(exp[0], max_display=10, show=False)
         st.pyplot(plt.gcf())
+        plt.clf()
 
 with tab2:
     # Data Distribution Plots
     st.subheader("Data Distribution")
     
-    data['diagnosis_label'] = data['diagnosis'].map({0: 'Benign', 1: 'Malignant'})
+    # Create diagnosis label based on target column
+    data['diagnosis_label'] = data[target_col].map({1: 'Malignant', 0: 'Benign'})
     
     # Diagnosis Distribution Pie Chart
     fig2, ax2 = plt.subplots()
@@ -351,7 +157,6 @@ with tab2:
     
     # Feature Distribution Boxplot
     st.subheader("Feature Distribution by Diagnosis")
-    # Use human-readable names for the selectbox
     feature_options = [(feature, feature.replace('_', ' ').title()) for feature in feature_order]
     selected_feature = st.selectbox(
         "Select feature to visualize",
@@ -373,26 +178,82 @@ with tab2:
     st.pyplot(fig3)
 
 with tab3:
-    # Model Information
-    st.subheader("Model Performance Metrics")
+    # Add selectbox for choosing train or test set
+    dataset_choice = st.selectbox(
+        "Select dataset to view metrics:",
+        ("Train Set", "Test Set"),
+        index=0  # Default to Train Set
+    )
     
-    # Feature Importance Plot with readable names
-    st.subheader("Top 10 Important Features")
-    fig4, ax4 = plt.subplots(figsize=(10, 6))
-    readable_names = [name.replace('_', ' ').title() for name in top_10_features]
-    ax4.barh(range(len(top_10_features)), importances[top_10_indices], color='#4e73df', align='center')
-    ax4.set_yticks(range(len(top_10_features)))
-    ax4.set_yticklabels(readable_names)
-    ax4.set_xlabel('Relative Importance')
+    if dataset_choice == "Train Set":
+        # Use training set
+        y_set = y_train
+        y_set_pred = model.predict(X_train)
+        y_set_pred_proba = model.predict_proba(X_train)[:, 1]
+        set_name = "Train Set"
+    else:
+        # Use test set
+        y_set = y_test
+        y_set_pred = y_pred
+        y_set_pred_proba = y_pred_proba
+        set_name = "Test Set"
+    
+    st.subheader(f"Model Performance Metrics ({set_name})")
+    
+    # Calculate metrics
+    precision = precision_score(y_set, y_set_pred)
+    recall = recall_score(y_set, y_set_pred)
+    f1 = f1_score(y_set, y_set_pred)
+    roc_auc = roc_auc_score(y_set, y_set_pred_proba)
+    
+    # Display metrics in columns
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Precision", f"{precision:.3f}")
+    col2.metric("Recall", f"{recall:.3f}")
+    col3.metric("F1 Score", f"{f1:.3f}")
+    col4.metric("ROC AUC", f"{roc_auc:.3f}")
+    
+    # ROC Curve
+    st.subheader(f"ROC Curve ({set_name})")
+    fpr, tpr, _ = roc_curve(y_set, y_set_pred_proba)
+    fig4, ax4 = plt.subplots()
+    ax4.plot(fpr, tpr, color='#4e73df', label=f'ROC curve (AUC = {roc_auc:.2f})')
+    ax4.plot([0, 1], [0, 1], color='gray', linestyle='--')
+    ax4.set_xlabel('False Positive Rate')
+    ax4.set_ylabel('True Positive Rate')
+    ax4.set_title(f'Receiver Operating Characteristic ({set_name})')
+    ax4.legend()
     st.pyplot(fig4)
     
-    # Confusion Matrix
-    st.subheader("Confusion Matrix")
-    y_pred = model.predict(X_test)
-    cm = confusion_matrix(y_test, y_pred)
+    # Precision-Recall Curve
+    st.subheader(f"Precision-Recall Curve ({set_name})")
+    precision_curve, recall_curve, _ = precision_recall_curve(y_set, y_set_pred_proba)
     fig5, ax5 = plt.subplots()
-    ConfusionMatrixDisplay(cm, display_labels=['Benign', 'Malignant']).plot(ax=ax5)
+    ax5.plot(recall_curve, precision_curve, color='#4e73df', label='Precision-Recall curve')
+    ax5.set_xlabel('Recall')
+    ax5.set_ylabel('Precision')
+    ax5.set_title(f'Precision-Recall Curve ({set_name})')
+    ax5.legend()
     st.pyplot(fig5)
+    
+    # Feature Importance Plot (unchanged - not dataset specific)
+    st.subheader("Top 10 Important Features")
+    importances = model.feature_importances_
+    top_10_indices = np.argsort(importances)[-10:]
+    fig6, ax6 = plt.subplots(figsize=(10, 6))
+    readable_names = [name.replace('_', ' ').title() for name in feature_order]
+    ax6.barh(range(len(top_10_indices)), importances[top_10_indices], color='#4e73df', align='center')
+    ax6.set_yticks(range(len(top_10_indices)))
+    ax6.set_yticklabels([readable_names[i] for i in top_10_indices])
+    ax6.set_xlabel('Relative Importance')
+    st.pyplot(fig6)
+    
+    # Confusion Matrix
+    st.subheader(f"Confusion Matrix ({set_name})")
+    cm = confusion_matrix(y_set, y_set_pred)
+    fig7, ax7 = plt.subplots()
+    ConfusionMatrixDisplay(cm, display_labels=['Benign', 'Malignant']).plot(ax=ax7)
+    st.pyplot(fig7)
 
 # Show raw data option
 if st.checkbox("Show raw data"):
