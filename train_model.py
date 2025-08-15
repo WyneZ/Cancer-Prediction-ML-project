@@ -23,4 +23,4 @@ joblib.dump(model, "cancer_model.pkl")
 X_df['target'] = y
 X_df.to_csv("breast_cancer.csv", index=False)
 
-print("✅ Model and dataset saved successfully.")
+print("Model and dataset saved successfully.")

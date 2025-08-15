@@ -43,16 +43,13 @@ feature_order = list(feature_names)
 
 # Standardize target encoding (convert strings to numbers if needed)
 if data[target_col].dtype == 'object':
-    # Convert common string encodings to numerical
     data[target_col] = data[target_col].map({'M': 1, 'B': 0, 'malignant': 1, 'benign': 0}).astype(int)
 else:
-    # Ensure numerical encoding is correct
     unique_values = sorted(data[target_col].unique())
     if len(unique_values) != 2:
         st.error(f"Target column must have exactly 2 classes, found {len(unique_values)}")
         st.stop()
     
-    # Assume the higher value is malignant (standard convention)
     if unique_values != [0, 1]:
         st.warning(f"Target column has unexpected values {unique_values}. Mapping {max(unique_values)} to Malignant.")
         data[target_col] = data[target_col].map({max(unique_values): 1, min(unique_values): 0})
@@ -68,10 +65,10 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 
 # Cache SHAP explainer for faster predictions
 @st.cache_resource
-def get_shap_explainer(_model):  # Note the underscore prefix
+def get_shap_explainer(_model):
     return shap.TreeExplainer(_model)
 
-explainer = get_shap_explainer(model)  # This will work now
+explainer = get_shap_explainer(model)
 
 # Predictions on TEST set only (for realistic metrics)
 y_pred = model.predict(X_test)
@@ -174,7 +171,6 @@ with tab2:
     fig2, ax2 = plt.subplots()
     diagnosis_counts = data['diagnosis_label'].value_counts()
     
-    # Ensure the order is Benign first, then Malignant
     diagnosis_counts = diagnosis_counts.reindex(['Benign', 'Malignant'])
     
     ax2.pie(
@@ -236,17 +232,15 @@ with tab3:
     dataset_choice = st.selectbox(
         "Select dataset to view metrics:",
         ("Train Set", "Test Set"),
-        index=0  # Default to Train Set
+        index=0
     )
     
     if dataset_choice == "Train Set":
-        # Use training set
         y_set = y_train
         y_set_pred = model.predict(X_train)
         y_set_pred_proba = model.predict_proba(X_train)[:, 1]
         set_name = "Train Set"
     else:
-        # Use test set
         y_set = y_test
         y_set_pred = y_pred
         y_set_pred_proba = y_pred_proba
