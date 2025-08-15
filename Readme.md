@@ -4,6 +4,10 @@ I couldn’t directly access your GitHub repository at that URL to read its exac
 
 ## Cancer Prediction ML Project
 
+### 0. Deploy Link
+Feel free to test.
+https://bcps-1111.streamlit.app/
+
 ### 1. Project Overview
 
 A machine learning solution that predicts the presence of cancer based on clinical/demographic data. The project guides users through:
